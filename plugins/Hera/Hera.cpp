@@ -254,6 +254,9 @@ struct Hera : public Unit {
     float hpf;
     bool chorusI;
     bool chorusII;
+    
+    // Gate state for note on/off detection
+    float lastGate;
 };
 
 // Forward declarations
@@ -297,6 +300,7 @@ void Hera_Ctor(Hera *unit) {
     unit->hpf = 0.0f;
     unit->chorusI = false;
     unit->chorusII = false;
+    unit->lastGate = 0.0f;
     
     SETCALC(Hera_next);
     Hera_next(unit, 1);
@@ -376,8 +380,7 @@ void Hera_next(Hera *unit, int inNumSamples) {
         float freqVal = freq[i];
         
         // Simple voice allocation on positive gate
-        static float lastGate = 0.0f;
-        if (gateVal > 0.5f && lastGate <= 0.5f) {
+        if (gateVal > 0.5f && unit->lastGate <= 0.5f) {
             // Note on - find free voice
             int voiceIdx = -1;
             for (int v = 0; v < kMaxVoices; v++) {
@@ -390,7 +393,7 @@ void Hera_next(Hera *unit, int inNumSamples) {
                 int midiNote = 69 + 12.0f * log2f(freqVal / 440.0f);
                 unit->voices[voiceIdx].noteOn(midiNote, 1.0f);
             }
-        } else if (gateVal <= 0.5f && lastGate > 0.5f) {
+        } else if (gateVal <= 0.5f && unit->lastGate > 0.5f) {
             // Note off - release all active voices
             for (int v = 0; v < kMaxVoices; v++) {
                 if (unit->voices[v].active) {
@@ -398,7 +401,7 @@ void Hera_next(Hera *unit, int inNumSamples) {
                 }
             }
         }
-        lastGate = gateVal;
+        unit->lastGate = gateVal;
         
         // Update LFO
         float lfoValue = unit->lfo.next(sampleRate);
