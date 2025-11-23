@@ -4,6 +4,13 @@ get_filename_component(PROJECT ${FILENAME} NAME_WE)
 message(STATUS "Project name is ${PROJECT}")
 project(${PROJECT})
 
+# SC_PATH must be set via -DSC_PATH=... when running cmake
+if(NOT SC_PATH)
+    message(FATAL_ERROR "SC_PATH must be set to the SuperCollider source directory")
+endif()
+
+message(STATUS "Using SC_PATH: ${SC_PATH}")
+
 include_directories(${SC_PATH}/include/plugin_interface)
 include_directories(${SC_PATH}/include/common)
 include_directories(${SC_PATH}/common)
@@ -68,7 +75,7 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_COMPILER_IS_CLANG)
     endif()
 
     if(CPP11)
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
         if(CMAKE_COMPILER_IS_CLANG)
             set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
         endif()

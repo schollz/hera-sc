@@ -2,6 +2,7 @@
 # Based on https://github.com/jpcima/Hera
 
 SC_PATH ?= ./supercollider
+SC_PATH_ABS := $(shell pwd)/$(SC_PATH)
 
 # Detect if supercollider folder exists
 ifeq ($(wildcard $(SC_PATH)/include/plugin_interface/SC_PlugIn.h),)
@@ -29,7 +30,7 @@ endif
 build: sc-clone
 	@echo "Building Hera SuperCollider plugin..."
 	mkdir -p plugins/Hera/build
-	cd plugins/Hera/build && cmake -DSC_PATH=../../../$(SC_PATH) -DCMAKE_BUILD_TYPE=Release ..
+	cd plugins/Hera/build && cmake -DSC_PATH=$(SC_PATH_ABS) -DCMAKE_BUILD_TYPE=Release ..
 	cd plugins/Hera/build && make
 
 clean:
