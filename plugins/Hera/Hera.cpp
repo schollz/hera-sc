@@ -129,14 +129,15 @@ struct DCO {
     
     float nextSub(float sampleRate) {
         // Sub oscillator is one octave down (square wave)
-        float subPhase = fmodf(phase * 0.5f, 1.0f);
+        float subPhase = phase * 0.5f;
+        if (subPhase >= 1.0f) subPhase -= 1.0f;
         return (subPhase < 0.5f) ? 1.0f : -1.0f;
     }
     
     float nextNoise() {
         // Simple white noise generator
         noiseState = noiseState * 1103515245 + 12345;
-        return ((noiseState >> 16) & 0x7FFF) / 16384.0f - 1.0f;
+        return ((noiseState >> 16) & 0x7FFF) / 32767.0f - 1.0f;
     }
     
     float next(float sampleRate) {
@@ -181,8 +182,9 @@ struct VCF {
         float cosOmega = cosf(omega);
         float alpha = 1.0f - cosOmega;
         
-        // Add resonance feedback
+        // Add resonance feedback with stability limiting
         float feedback = resonance * 4.0f;
+        if (feedback > 3.99f) feedback = 3.99f;  // Prevent instability
         float inputWithFeedback = input + z1 * feedback;
         
         z1 = z1 + alpha * (inputWithFeedback - z1);
@@ -390,7 +392,10 @@ void Hera_next(Hera *unit, int inNumSamples) {
                 }
             }
             if (voiceIdx >= 0) {
-                int midiNote = 69 + 12.0f * log2f(freqVal / 440.0f);
+                int midiNote = 69 + (int)(12.0f * log2f(freqVal / 440.0f));
+                // Clamp to valid MIDI range
+                if (midiNote < 0) midiNote = 0;
+                if (midiNote > 127) midiNote = 127;
                 unit->voices[voiceIdx].noteOn(midiNote, 1.0f);
             }
         } else if (gateVal <= 0.5f && unit->lastGate > 0.5f) {
